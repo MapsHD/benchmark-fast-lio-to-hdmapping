@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
+#include "sensor_msgs/point_cloud2_iterator.h"
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
 #include <nav_msgs/Odometry.h>
@@ -254,113 +255,15 @@ bool save_poses(const std::string file_name, std::vector<Eigen::Affine3d> m_pose
     return true;
 }
 
-// // Funkcja callback dla danych odometrycznych
-// void odometryCallback(const nav_msgs::Odometry::SharedPtr msg)
-// {
-//     double x = msg->pose.pose.position.x;
-//     double y = msg->pose.pose.position.y;
-//     double z = msg->pose.pose.position.z;
-
-//     double qx = msg->pose.pose.orientation.x;
-//     double qy = msg->pose.pose.orientation.y;
-//     double qz = msg->pose.pose.orientation.z;
-//     double qw = msg->pose.pose.orientation.w;
-  
-//     TrajectoryPose pose;
-
-//     uint64_t sec_in_ms = static_cast<uint64_t>(msg->header.stamp.sec) * 1000ULL;
-//     uint64_t ns_in_ms = static_cast<uint64_t>(msg->header.stamp.nsec) / 1'000'000ULL;
-//    // pose.timestamp_ns = msg->header.stamp.sec;
-//     pose.timestamp_ns = sec_in_ms + ns_in_ms;
-//     pose.x_m = msg->pose.pose.position.x;  
-//     pose.y_m = msg->pose.pose.position.y;  
-//     pose.z_m = msg->pose.pose.position.z;  
-//     pose.qw = msg->pose.pose.orientation.w;  
-//     pose.qx = msg->pose.pose.orientation.x;  
-//     pose.qy = msg->pose.pose.orientation.y;  
-//     pose.qz = msg->pose.pose.orientation.z;  
-    
-//     trajectory.push_back(pose);
-    
-//    // chunks_trajectory.push_back(trajectory);
-
-//     RCLCPP_INFO(rclcpp::get_logger("pose_logger"), "Timestamp: %.9f", pose.timestamp_ns);
-    
-//     // Zapisz dane do pliku
-//     //saveOdometryDataToFile("odometry_data.csv", x, y, z, qx, qy, qz, qw);
-
-// //     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Otrzymano dane odometryczne:");
-// //     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Pozycja: x = %f, y = %f, z = %f", 
-// //                 msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
-// //     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Orientacja: qx = %f, qy = %f, qz = %f, qw = %f",
-// //                 msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, 
-// //                 msg->pose.pose.orientation.z, msg->pose.pose.orientation.w);
-//  }
-
-// void pointCloudCallback(const sensor_msgs::PointCloud2::SharedPtr msg)
-// {
-//     // Stwórz obiekt PointCloud
-//     pcl::PointCloud<pcl::PointXYZ> cloud;
-
-//     // Sprawdź dane w PointCloud2
-//     uint8_t* data_ptr = msg->data.data();
-//     size_t point_step = msg->point_step;
-
-//     int point_counter = 0;
-//     // Rozpakuj punkty z danych
-//     for (size_t i = 0; i < msg->width; ++i)
-//     {
-//         pcl::PointXYZ point;
-
-//         // Wypełnij punkty x, y, z
-//         point.x = *reinterpret_cast<float*>(data_ptr + i * point_step);
-//         point.y = *reinterpret_cast<float*>(data_ptr + i * point_step + 4);
-//         point.z = *reinterpret_cast<float*>(data_ptr + i * point_step + 8);
-
-//         cloud.points.push_back(point);
-        
-//         point_counter++;
-//         Point3Di point_global;
-//         uint64_t sec_in_ms = static_cast<uint64_t>(msg->header.stamp.sec) * 1000ULL;
-//         uint64_t ns_in_ms = static_cast<uint64_t>(msg->header.stamp.nsec) / 1'000'000ULL;
-//         point_global.timestamp = sec_in_ms + ns_in_ms;
-//         //point_global.timestamp = msg->header.stamp.sec;
-//         point_global.point = Eigen::Vector3d(point.x, point.y, point.z);
-//         point_global.intensity = 0;
-//         point_global.index_pose = point_counter;
-//         point_global.lidarid = 1;
-//         point_global.index_point = point_counter;
-   
-//        // RCLCPP_INFO(rclcpp::get_logger("point"), "Timestamp: %.9f", point_global.timestamp );
-
-//         points_global.push_back(point_global);
-
-//     }
-
-
-//    // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Otrzymano %zu punktów z PointCloud2", cloud.points.size());
-
-//     // // Wyświetl pierwsze 5 punktów
-//     // for (size_t i = 0; i < cloud.points.size(); ++i)
-//     // {
-//     //     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Punkt %zu: x = %f, y = %f, z = %f", 
-//     //                 i, cloud.points[i].x, cloud.points[i].y, cloud.points[i].z);
-//     // }
-    
-// }
-
 int main(int argc, char **argv)
 {
 
-    // parse command line arguments for directory to process
     if (argc < 3)
     {
-        std::cout << "Usage: " << argv[0] << " <input_bag> <directory>" << std::endl;
-        std::cout << " Options are:" << std::endl;
-        std::cout << " --input " << std::endl;
-        std::cout << " --directory " << std::endl;
+        std::cout << "Usage: " << argv[0] << " <input_bag> <output_directory>" << std::endl;
         return 1;
     }
+    
     const std::string input_bag = argv[1];
     const std::string output_directory = argv[2];
     ros::serialization::Serializer<sensor_msgs::PointCloud2> serializationPointCloud2;
@@ -373,19 +276,16 @@ int main(int argc, char **argv)
     rosbag::View view(bag); 
 
     for (const rosbag::MessageInstance& m : view) {
-        // Sprawdzamy, czy wiadomość pochodzi z odpowiedniego tematu
         if (m.getTopic() == "/cloud_registered") {
             ROS_INFO("Received message on topic: /cloud_registered");
 
-            // Przekształcamy wiadomość do odpowiedniego typu
             sensor_msgs::PointCloud2::ConstPtr cloud_msg = m.instantiate<sensor_msgs::PointCloud2>();
 
             if (cloud_msg) {
-                // Przetwarzamy wiadomość PointCloud2
                 pcl::PointCloud<pcl::PointXYZ> cloud;
                 pcl::fromROSMsg(*cloud_msg, cloud);
 
-                size_t num_points = cloud.points.size();  // Suma punktów
+                size_t num_points = cloud.points.size();
                 if (num_points == 0) {
                     ROS_ERROR("Error: Empty PointCloud2 message!");
                     return 1;
@@ -393,46 +293,51 @@ int main(int argc, char **argv)
 
                 ROS_INFO("Processing %zu points", num_points);
 
-                // Przetwarzanie punktów
-                for (size_t i = 0; i < num_points; ++i) {
-                    pcl::PointXYZ point = cloud.points[i];
-
-                    // Konwersja do Point3Di
+                sensor_msgs::PointCloud2ConstIterator<float> iter_x(*cloud_msg, "x");
+                sensor_msgs::PointCloud2ConstIterator<float> iter_y(*cloud_msg, "y");
+                sensor_msgs::PointCloud2ConstIterator<float> iter_z(*cloud_msg, "z");
+    
+                for (size_t i = 0; i < num_points; ++i, ++iter_x, ++iter_y, ++iter_z)
+                {
+                    pcl::PointXYZ point;
+                    point.x = *iter_x;
+                    point.y = *iter_y;
+                    point.z = *iter_z;
+                
+                    cloud.points.push_back(point);
+                
                     Point3Di point_global;
-                    if (cloud_msg->header.stamp.sec != 0 || cloud_msg->header.stamp.nsec != 0) {
+                
+                    if (cloud_msg->header.stamp.sec != 0 || cloud_msg->header.stamp.nsec != 0)
+                    {
                         uint64_t sec_in_ms = static_cast<uint64_t>(cloud_msg->header.stamp.sec) * 1000ULL;
                         uint64_t ns_in_ms = static_cast<uint64_t>(cloud_msg->header.stamp.nsec) / 1'000'000ULL;
                         point_global.timestamp = sec_in_ms + ns_in_ms;
                     }
-
+                
                     point_global.point = Eigen::Vector3d(point.x, point.y, point.z);
-                    point_global.intensity = 0;
+                    point_global.intensity = 0;  
                     point_global.index_pose = static_cast<int>(i);
                     point_global.lidarid = 0;
                     point_global.index_point = static_cast<int>(i);
-
+                
                     points_global.push_back(point_global);
                 }
-
+                
                 ROS_INFO("Processed %zu points!", cloud.points.size());
             }
         }
-
-        
-        // Sprawdzamy, czy temat to /Odometry
+       
         if (m.getTopic() == "/Odometry") {
             ROS_INFO("Received message on topic: /Odometry");
 
-            // Deserializacja wiadomości
             nav_msgs::Odometry::ConstPtr odom_msg = m.instantiate<nav_msgs::Odometry>();
 
-            // Sprawdzanie, czy wiadomość została poprawnie zdeserializowana
             if (!odom_msg) {
                 ROS_ERROR("Odometry message deserialization error!");
                 return 1;
             }
 
-            // Pobranie pozycji i orientacji
             double x = odom_msg->pose.pose.position.x;
             double y = odom_msg->pose.pose.position.y;
             double z = odom_msg->pose.pose.position.z;
@@ -442,15 +347,12 @@ int main(int argc, char **argv)
             double qz = odom_msg->pose.pose.orientation.z;
             double qw = odom_msg->pose.pose.orientation.w;
 
-            // Struktura trajektorii
             TrajectoryPose pose;
 
-            // Przeliczenie znacznika czasu
             uint64_t sec_in_ms = static_cast<uint64_t>(odom_msg->header.stamp.sec) * 1000ULL;
             uint64_t ns_in_ms = static_cast<uint64_t>(odom_msg->header.stamp.nsec) / 1'000'000ULL;
             pose.timestamp_ns = sec_in_ms + ns_in_ms;
 
-            // Przypisanie wartości do struktury trajektorii
             pose.x_m = x;
             pose.y_m = y;
             pose.z_m = z;
@@ -499,35 +401,6 @@ int main(int argc, char **argv)
     
                    
     // std::cout << "transforming point to global coordinate system finished" << std::endl;
-
-
-    // std::cout << trajectory[0].timestamp_ns << std::endl;
-    // std::cout << points_global[0].timestamp << std::endl;
-
-    // std::cout << "changing points" << std::endl;
-
-    // std::vector<Eigen::Affine3d> global_trajectory;
-    // Eigen::Affine3d global_transform = Eigen::Affine3d::Identity(); 
-    
-    // for (size_t i = 0; i < trajectory.size(); ++i) {
-    //     // Pobranie lokalnej transformacji
-    //     Eigen::Vector3d trans_local(trajectory[i].x_m, trajectory[i].y_m, trajectory[i].z_m);
-    //     Eigen::Quaterniond q_local(trajectory[i].qw, trajectory[i].qx, trajectory[i].qy, trajectory[i].qz);
-    
-    //     Eigen::Affine3d local_transform = Eigen::Affine3d::Identity();
-    //     local_transform.translation() = trans_local;
-    //     local_transform.linear() = q_local.toRotationMatrix();
-    
-    //     // Kumulacja transformacji (przemnażanie macierzy)
-    //     global_transform = global_transform * local_transform;
-    
-    //     // Zapisz globalną transformację
-    //     global_trajectory.push_back(global_transform);
-    // }
-
-    // for (size_t i = 0; i < points_global.size() && i < global_trajectory.size(); ++i) {
-    //     points_global[i].point = global_trajectory[i] * points_global[i].point;
-    // }
 
     std::cout << "start loading pc" << std::endl;
     std::cout << "loading pc finished" << std::endl;
@@ -707,30 +580,30 @@ int main(int argc, char **argv)
             // auto pose = worker_data_concatenated[i].intermediate_trajectory[0].inverse() * worker_data_concatenated[i].intermediate_trajectory[j];
 
             outfile
-                << std::setprecision(20) << chunks_trajectory[i][j].timestamp_ns * 1e9 << " " << std::setprecision(10)
-                // << pose(0, 0) << " "
-                // << pose(0, 1) << " "
-                // << pose(0, 2) << " "
-                // << pose(0, 3) << " "
-                // << pose(1, 0) << " "
-                // << pose(1, 1) << " "
-                // << pose(1, 2) << " "
-                // << pose(1, 3) << " "
-                // << pose(2, 0) << " "
-                // << pose(2, 1) << " "
-                // << pose(2, 2) << " "
-                // << pose(2, 3) << " "
-                // << 0 << " "
-                // << 0 << " "
-                // << 0 << " "
-                << chunks_trajectory[i][j].x_m << " "  // x
-                << chunks_trajectory[i][j].y_m << " "  // y
-                << chunks_trajectory[i][j].z_m << " "  // z
-                << chunks_trajectory[i][j].qw << " "   // qw
-                << chunks_trajectory[i][j].qx << " "   // qx
-                << chunks_trajectory[i][j].qy << " "   // qy
-                << chunks_trajectory[i][j].qz << " "   // qz
-                << std::endl;
+            << std::setprecision(20) << chunks_trajectory[i][j].timestamp_ns * 1e9 << " " << std::setprecision(10)
+
+            << pose(0, 0) << " "
+            << pose(0, 1) << " "
+            << pose(0, 2) << " "
+            << pose(0, 3) << " "
+            << pose(1, 0) << " "
+            << pose(1, 1) << " "
+            << pose(1, 2) << " "
+            << pose(1, 3) << " "
+            << pose(2, 0) << " "
+            << pose(2, 1) << " "
+            << pose(2, 2) << " "
+            << pose(2, 3) << " "
+            // Position (x, y, z)
+            // << chunks_trajectory[i][j].x_m << " "  // x
+            // << chunks_trajectory[i][j].y_m << " "  // y
+            // << chunks_trajectory[i][j].z_m << " "  // z
+            // << chunks_trajectory[i][j].qw << " "   // qw
+            // << chunks_trajectory[i][j].qx << " "   // qx
+            // << chunks_trajectory[i][j].qy << " "   // qy
+            // << chunks_trajectory[i][j].qz << " "   // qz
+            << std::setprecision(20) << chunks_trajectory[i][j].timestamp_ns * 1e9 << " " << std::setprecision(10)
+            << std::endl;
         }
         outfile.close();
     }
