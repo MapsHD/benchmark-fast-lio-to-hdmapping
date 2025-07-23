@@ -1,8 +1,8 @@
 [submodule "src/FAST_LIO"]
 	path = src/FAST_LIO
 	url = https://github.com/hku-mars/FAST_LIO.git
-[submodule "src/cpp_pubsub/src/3rdparty/LASzip"]
-	path = src/cpp_pubsub/src/3rdparty/LASzip
+[submodule "src/fast-lio-to-hdmapping/src/3rdparty/LASzip"]
+	path = src/fast-lio-to-hdmapping/src/3rdparty/LASzip
 	url = https://github.com/LASzip/LASzip.git
 [submodule "src/livox_ros_driver"]
 	path = src/livox_ros_driver

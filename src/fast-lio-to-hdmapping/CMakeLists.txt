@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(cpp_pubsub)
+project(fast-lio-to-hdmapping)
 
 find_package(catkin QUIET COMPONENTS
   roscpp
