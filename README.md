@@ -3,7 +3,7 @@
 ## Intended use 
 
 This small toolset allows to integrate SLAM solution provided by [fast-lio](https://github.com/hku-mars/FAST_LIO.git) with [HDMapping](https://github.com/MapsHD/HDMapping).
-This repository contains ROS  workspace that :
+This repository contains ROS 1 workspace that :
   - submodule to tested revision of fast-lio
   - a converter that listens to topics advertised from odometry node and save data in format compatible with HDMapping.
 
