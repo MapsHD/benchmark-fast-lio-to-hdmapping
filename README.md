@@ -59,7 +59,10 @@ For this example, download eee_03.
 ```shell
 rosbag record /cloud_registered /Odometry -O {your_directory_for_the_recorded_bag}
 ```
+
+
 ## Modify 
+```shell 
   src/FAST-LIO-to-HDMapping/src/FAST_LIO/config/ouster64.yaml
 
   lid_topic: "/os_cloud_node/points"
@@ -69,6 +72,7 @@ rosbag record /cloud_registered /Odometry -O {your_directory_for_the_recorded_ba
   
   lid_topic: "/os1_cloud_node1/points"
   imu_topic: "/os1_cloud_node1/imu"
+```
 
 ## FAST-LIO Launch:
 
